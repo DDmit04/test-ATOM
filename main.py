@@ -8,7 +8,7 @@ class BackwardNumSumIterator(object):
         self.direction = -1
 
     def next(self):
-        if self.current % 10 != 9 and self.current % 10 != 0:
+        if self.current % 10 != 0:
             self.sum += self.direction
         else:
             self.sum = get_dij_sum(self.current + self.direction)
