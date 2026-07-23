@@ -70,14 +70,6 @@ def input_positive_int(msg):
             print(u"Неверный ввод")
 
     return res or 0
-    
-    
-    if __name__ == '__main__':
-        x = input_positive_int(u"координата X: ")
-        y = input_positive_int(u"координата Y: ")
-        cap = input_positive_int(u"Сумма: ")
-        print(u"Доступных клеток: ", calc_ant_cells(x, y, cap))
-
 
 if __name__ == '__main__':
     x = input_positive_int("координата X: ")
