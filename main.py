@@ -45,8 +45,8 @@ def calc_ant_cells(start_x, start_y, _cap):
             new_x = _x + dx
             new_y = _y + dy
 
-            in_visited = (new_x, new_y) not in visited
-            if not in_visited:
+            is_visited = (new_x, new_y) in visited
+            if is_visited:
                 continue
             
             is_allowed = is_cell_allowed(new_x, new_y, _cap)
