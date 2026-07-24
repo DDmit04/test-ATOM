@@ -25,12 +25,10 @@ MOVES = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 def digit_sum(num):
     return sum(map(int, str(abs(num))))
 
+def is_cell_allowed(_x, _y, _cap):
+    return digit_sum(_x) + digit_sum(_y) <= _cap
 
-def is_cell_allowed(x, y, cap):
-    return digit_sum(x) + digit_sum(y) <= cap
-
-
-def calc_ant_cells(start_x, start_y, cap):
+def calc_ant_cells(start_x, start_y, _cap):
 
     if not is_cell_allowed(_x, _y, _cap) or _cap <= 0:
         return 0
@@ -51,7 +49,7 @@ def calc_ant_cells(start_x, start_y, cap):
             if not in_visited:
                 continue
             
-            is_allowed = is_cell_allowed(new_x, new_y, cap)
+            is_allowed = is_cell_allowed(new_x, new_y, _cap)
             if not is_allowed:
                 continue
                 
