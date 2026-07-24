@@ -30,7 +30,7 @@ def is_cell_allowed(_x, _y, _cap):
 
 def calc_ant_cells(start_x, start_y, _cap):
 
-    if not is_cell_allowed(_x, _y, _cap) or _cap <= 0:
+    if not is_cell_allowed(start_x, start_y, _cap) or _cap <= 0:
         return 0
     
     start = (start_x, start_y)
