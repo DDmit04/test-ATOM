@@ -1,6 +1,8 @@
 #coding=utf-8
 from __future__ import print_function
 
+from collections import deque
+
 """
 Постановка:
 
@@ -14,128 +16,49 @@ from __future__ import print_function
 
 -----------------------------------------------------------------------------------------------------------------------
 
-Логика решения:
+Логика решения: 
 
-1. В задаче сказано "сумма цифр" - значит мы можем не думать про отрицательные значения координат
-2. Представим простой пример на клетчатой бумаге:
-муравей в точке (1, 1), сумма цифр координат не превышает 2 - получим равносторонний ромб
-* * * 1 * * *
-* * 1 1 A * *
-* 1 1 1 1 1 *
-* * 1 1 1 * *
-* * * 1 * * *
-мы можем вычислить площадь этого ромба - радиус ** 2 + (радиус + 1) ** 2
-Радиус этого ромба - 2
-площадь - 2 ** 2 + 3 ** 2 = 13 клеток
-
-Радиус мы можем получить исходя из точки и суммы - (|X| + |Y|) + (СУММА - сумма цифр(|X| + |Y|))
-Суть формулы - нам нужно понять где по оси X находится следующая (и ближайшая к муравью) недоступная клетка.
-Эта клетка и ограничит размер нашего ромба
-(1 + 1) + (2 - 2) = 2
-почему мы можем складывать X и Y - ромб симметричный, так что если точка (1, 9) входит в его область, то и (10, 0) тоже будет входить (тк в формуле учтена СУММА)
-почему сумма цифр суммы, а не сумма сумм цифр по отдельности - мы проверили, что точка (X, Y) попадает в ромб по условию СУММы, 
-    но нам нужно понять сколько нам не хватает по оси X до недоступной клетки, 
-    а это число не может быть больше СУММы, так как мы привели всё к оси X (прибавив |Y| к |X| в начале формулы) 
-    и теперь у нас есть ещё "0 <= * <= СУММА" клеток до недоступной чтобы выполнялось условие по СУММе
-
-3. Более сложный пример:
-
-точка (10, 0) и сумма 2
-
-примерное, неточное изображение ситуации
-1 - доступные клетки
-0 - недоступные
-A - муравей
-"-" - центр координат
-* * * * * * * * * 0 * * * * * * * * *
-* * * * * * * * 0 1 0 * * * * * * * *
-* * * * * * * 0 1 1 1 0 * * * * * * *
-* * * * * * 0 1 1 0 1 1 0 * * * * * *
-* * * * * 0 1 1 0 0 0 1 1 0 * * * * *
-* * * * 0 1 1 0 0 0 0 0 1 1 0 * * * *
-* * * 0 1 1 0 0 0 0 0 0 0 1 1 0 * * *
-* * 0 1 1 0 0 0 0 1 0 0 0 0 1 1 0 * *
-* 0 1 1 0 0 0 0 1 1 1 0 0 0 0 1 1 0 *
-0 1 1 0 0 0 0 1 1 - 1 1 0 0 0 0 A 1 0
-* 0 1 1 0 0 0 0 1 1 1 0 0 0 0 1 1 0 *
-* * 0 1 1 0 0 0 0 1 0 0 0 0 1 1 0 * *
-* * * 0 1 1 0 0 0 0 0 0 0 1 1 0 * * *
-* * * * 0 1 1 0 0 0 0 0 1 1 0 * * * *
-* * * * * 0 1 1 0 0 0 1 1 0 * * * * *
-* * * * * * 0 1 1 0 1 1 0 * * * * * *
-* * * * * * * 0 1 1 1 0 * * * * * * *
-* * * * * * * * 0 1 0 * * * * * * * *
-* * * * * * * * * 0 * * * * * * * * *
-
-тут появляется сложность - внутри нашего ромба образуется другой ромб из недоступных клеток,
-ведь если мы пойдём назад по оси X, то получим клетку (9, 0), сумма цифр координат которой больше чем 2
-решение - вычесть площадь внутреннего ромба из площади внешнего,
-    - идём назад по оси X и ищем первую недоступную клетку
-    - получаем радиус внутреннего ромба
-    - вычитаем
-
-при проходе назад нам не нужно каждый раз пересчитывать сумму координат,
-достаточно делать эт только при смене десятков (и, как следствие, потенциально и других разрядов)
-в остальных случаях можно просто вычитать 1 из суммы, полученной на прошлом шаге,
-это сэкономит ресурсы при работе с большими числами
+Обычный обход в ширину из данной клетки, который происходит за O(n), где n - количество точек в результате
 """
+MOVES = [(1, 0), (-1, 0), (0, 1), (0, -1)]
 
-class BackwardNumSumIterator(object):
-    def __init__(self, start):
-        self.current = start
-        self.sum = get_dij_sum(start)
-        self.direction = -1
-
-    def next(self):
-        if self.current % 10 != 0:
-            self.sum += self.direction
-        else:
-            self.sum = get_dij_sum(self.current + self.direction)
-
-        self.current += self.direction
-        return self.sum
-
-    def __iter__(self):
-        return self
+def digit_sum(num):
+    return sum(map(int, str(abs(num))))
 
 
-def get_dij_sum(dijit):
-    return sum(map(int, str(dijit)))
+def is_cell_allowed(x, y, cap):
+    return digit_sum(x) + digit_sum(y) <= cap
 
 
-def get_square(diameter):
-    return (diameter + 1) ** 2 + diameter ** 2
+def calc_ant_cells(start_x, start_y, cap):
 
-
-def calc_ant_cells(x, y, cap):
-    x = abs(x)
-    y = abs(y)
-    x += y
-
-    if get_dij_sum(x) > cap or cap <= 0:
+    if not is_cell_allowed(_x, _y, _cap) or _cap <= 0:
         return 0
+    
+    start = (start_x, start_y)
 
-    full_diameter = x + (cap - get_dij_sum(x))
-    full_square = get_square(full_diameter)
+    q = deque([start])
+    visited = set([start])
 
-    d_sum = BackwardNumSumIterator(x)
+    while q:
+        _x, _y = q.popleft()
 
-    # +1 потому что в конце будет лишняя итерация
-    while d_sum.sum <= cap + 1 and d_sum.current > 0:
-        d_sum.next()
+        for dx, dy in MOVES:
+            new_x = _x + dx
+            new_y = _y + dy
 
-    if d_sum.current == 0:
-        border_square = 0
-    else:
-        border_diameter = d_sum.current
-        border_square = get_square(border_diameter)
+            in_visited = (new_x, new_y) not in visited
+            if not in_visited:
+                continue
+            
+            is_allowed = is_cell_allowed(new_x, new_y, cap)
+            if not is_allowed:
+                continue
+                
+            visited.add((new_x, new_y))
+            q.append((new_x, new_y))
 
-    print(u"Радиус внешнего ромба:", full_diameter)
-    print(u"Площадь внешнего ромба: ", full_square)
-    print(u"Радиус внутреннего ромба: ", d_sum.sum)
-    print(u"Площадь внутреннего ромба: ", border_square)
-
-    return full_square - border_square
+    return len(visited)
 
 
 def input_positive_int(msg):
@@ -149,10 +72,9 @@ def input_positive_int(msg):
             print(u"Неверный ввод")
 
     return res or 0
-
+    
 if __name__ == '__main__':
     x = input_positive_int("координата X: ")
     y = input_positive_int("координата Y: ")
     cap = input_positive_int("Сумма: ")
-
-    print("Доступных клеток:", calc_ant_cells(x, y, cap))
+    print(u"Доступных клеток:", calc_ant_cells(x, y, cap))
